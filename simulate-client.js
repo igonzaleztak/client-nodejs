@@ -16,6 +16,8 @@ const https = require('https');
 
 
 /***************** Global variables *********************/
+
+// Connection with node of the client
 const gethPath = '/home/ivan/Desktop/demoPOA2/client-node/geth.ipc'
 const web3 = new Web3(gethPath, net);
 
@@ -23,8 +25,9 @@ const web3 = new Web3(gethPath, net);
 const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
-//const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
-const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
+const X = "a01d72423f813f32142b5dea22c891aedff507353b30efb8ab1464facba5f81a";
+
+// URL of the server
 //const serverHost = 'http://127.0.0.1:5051/'
 const serverHost = 'https://127.0.0.1:8051/'
 
@@ -262,6 +265,7 @@ async function main() {
       gas: 400000
     }).catch((err) => { throw (err) });
   }  
+  
 
   // Get the price of X
   let price = await balanceContract.methods.getPriceData("0x" + X).call()
@@ -283,13 +287,14 @@ async function main() {
   .catch((err) => { throw (err) });  
 
   // If there is not an event, It means that this account has not bought the measurement yet
-  if (events.length == 0) {
-    // Buy X
+  if (events.length == 0) 
+  {
+    // Buy X        
     await balanceContract.methods.payData(Buffer.from(X, 'hex')).send({
       from: clientAddr,
       gasPrice: '0',
       gas: 400000
-    }).catch((err) => { throw (err) });
+    }).catch((err)=>{throw (err)});
   }
 
   // Do the signature of the data PrKey(hash + timestamp)
