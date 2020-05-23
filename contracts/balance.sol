@@ -8,15 +8,40 @@ contract dataLedgerContract
     function retrieveInfo(bytes32) public view returns (string memory, string memory) {}
 }
 
+contract accessControlContract
+{
+    function getPubKey(address) public view returns (string memory) {}
+}
+
 
 contract balanceContract
 {
     
     dataLedgerContract dataContract;
+    accessControlContract accessContract;
     
-    // This variable is used to check if an account has bought
-    // a piece of data
-    mapping(address => mapping(bytes32 => bool)) hasPayed;
+    // Address of the admin/owner of information
+    address admin = 0x21A018606490C031A8c02Bb6b992D8AE44ADD37f;
+    
+    // Data associated with its client
+    struct clientVariables 
+    {
+        mapping(bytes32 => hashVariables) purchases;
+    }
+    
+    struct hashVariables
+    {
+        // True if the item is being bought by the client, false otherwise
+        bool purchaseInProcess;
+        
+        // True if the client has already bought an item, false otherwise
+        bool alreadyBought;
+    }
+    
+    
+    // User Purchases
+    mapping(address => clientVariables) userPurchases;
+    
     
     // Balance of the owner
     uint256 balance;
@@ -24,15 +49,12 @@ contract balanceContract
     // Prices of the data 
     mapping(bytes32 => uint256) catalogue;
     
-    // Address of the admin/owner of information
-    address admin = 0x21A018606490C031A8c02Bb6b992D8AE44ADD37f;
-    
     // Definition of the event that will be emitted when a purchase is made
     event purchaseNotify(address indexed _addr, bytes32 indexed _hash, uint256 _value);
     
     // Event to store the info sent by the owner of the data to the clients 
     // in the blockchain
-    event responseNotify(address indexed _addr, bytes32 indexed _hash, bytes32 _txHashExchange, bytes32 _txHashData);
+    event responseNotify(address indexed _addr, bytes32 indexed _hash, bytes32 _txHashOTP);
     
     
     /************************* Functions **********************************************/
@@ -59,68 +81,53 @@ contract balanceContract
     }
     
     
-    // Function to pay the data of the hash
-    function payData(bytes32 hash, uint256 tokens) public
+    // Buys a measurement
+    function payData(bytes32 hash) public
     {
-        // Confirm that the amount of money sent by the client 
-        // is enough to buy the data
-        assert(tokens >= catalogue[hash]);
+        // Check that the user has indicated his public key to the accessContract
+        require(bytes(accessContract.getPubKey(msg.sender)).length != 0
+        , "The client must indicate his public key");
         
-        // Check that the user is not trying to buy something that
-        // is already bought
-        assert(hasPayed[msg.sender][hash] != true);
+        // Check that the user has not bought the info yet
+        require(userPurchases[msg.sender].purchases[hash].alreadyBought == false
+        , "The user has already bought this element");
         
-        // Check if the hash exists
-        (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
-        assert (bytes(uri).length != 0);
-        assert(bytes(pubDate).length != 0);
+        // Check that the purchase is not in procces of being paid
+        require(userPurchases[msg.sender].purchases[hash].purchaseInProcess == false
+        , "The proccess of this purchase is still on going");
         
-        // Check that the element is available to buy (price != 0)
-        assert(getPriceData(hash) != 0);
+        // Indicates that the process of the purchase has started
+        userPurchases[msg.sender].purchases[hash].purchaseInProcess = true;
         
-        // Update the balance of the owner
-        balance += catalogue[hash];
-        
-        // Update the hasPayed function to true
-        hasPayed[msg.sender][hash] = true;
-        
-        // Emitting the event 
-        emit purchaseNotify(msg.sender, hash, catalogue[hash]);
-    }
-    
-    
-    // Function that checks the value of hasPayed
-    function checkHasPayed(address clientAccount, bytes32 hash) public view returns (bool)
-    {
-        return hasPayed[clientAccount][hash];
-    }
-    
-    
-    // Send the response to the clientAccount
-    function sendToClient(address clientAccount, bytes32 hash, bytes32 txHashExchange, bytes32 txHashData) public
-    {
-        // The only user that can send information to the client is the admin
-        assert(msg.sender == admin);
-        
-        // Set to false the hash
-        hasPayed[clientAccount][hash] = false;
-        
-        // Emitting the event to assure that the response has been sent
-        emit responseNotify(clientAccount, hash, txHashExchange, txHashData);
+        // Emit event indicating that the client has bought a measurement
+        emit purchaseNotify(msg.sender, hash, getPriceData(hash));
         
     }
     
     
-    // Check the balance of the admin
-    function checkBalance() public view returns(uint256)
+    // Function used to indacate that the admin has sent the OTP to the client
+    function sendData(address client, bytes32 hash, bytes32 txHashOTP) public  
     {
-        assert(msg.sender == admin);
-        return balance;
+        // Only the admin user can send the data
+        require(msg.sender == admin
+        , "User has not enough privileges to do this option");
+    
+        // check that the purchase in on process 
+        require(userPurchases[client].purchases[hash].purchaseInProcess == true
+        , "There has not been any purchase associated to this hash and this user");
+        
+        // Set the variable alreadyBought to True
+        userPurchases[client].purchases[hash].alreadyBought = true;
+        
+        // Set the variable pruchasInProcess to false
+        userPurchases[client].purchases[hash].purchaseInProcess = false;
+        
+        // Emit event indicating that the admin has sent the OTP to the client
+        emit responseNotify(client, hash, txHashOTP);
     }
     
     
-    
-    /****** Accessing the data of the other contract ******/
+    /****** Accessing the data of the other contracts ******/
     
     function setAddress(address _address) public
     {
@@ -129,5 +136,10 @@ contract balanceContract
     }
     
     
+    function setAddress2(address _address) public
+    {
+        assert(msg.sender == admin);
+        accessContract = accessControlContract(_address);
+    }
     
 }

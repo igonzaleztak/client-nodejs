@@ -16,7 +16,6 @@ const https = require('https');
 
 
 /***************** Global variables *********************/
-//const gethPath = '/home/ivan/Desktop/demoPOA2/new-node/geth.ipc';
 const gethPath = '/home/ivan/Desktop/demoPOA2/client-node/geth.ipc'
 const web3 = new Web3(gethPath, net);
 
@@ -26,8 +25,8 @@ const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
 //const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
 const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
-const serverHost = 'http://127.0.0.1:5051/'
-//const serverHost = 'https://127.0.0.1:8051/'
+//const serverHost = 'http://127.0.0.1:5051/'
+const serverHost = 'https://127.0.0.1:8051/'
 
 // The following line is to accept TLS connections with self-signed certificates
 const agent = new https.Agent({ rejectUnauthorized: false });
@@ -286,28 +285,12 @@ async function main() {
   // If there is not an event, It means that this account has not bought the measurement yet
   if (events.length == 0) {
     // Buy X
-    await balanceContract.methods.payData(Buffer.from(X, 'hex'), price).send({
+    await balanceContract.methods.payData(Buffer.from(X, 'hex')).send({
       from: clientAddr,
       gasPrice: '0',
       gas: 400000
     }).catch((err) => { throw (err) });
   }
-
-  // Check if the event has already been paid to the client
-  let [hasTheDataBeenGiven, txSecretHash, txDataHash] = await checkIfDataHasBeenGiven(web3, balanceContract);
-  if (hasTheDataBeenGiven)
-  {
-    console.log("\nYou can find X in the following transactions:");
-    console.log("Key to decipher X: " + txSecretHash);
-    console.log("X encrypted: " + txDataHash);
-
-    // Get the value of X
-    let measurement = await decryptMeasurement(web3, txSecretHash, txDataHash, privateKey);
-
-    console.log("\nValue of X:");
-    console.log(measurement);
-    process.exit()
-  }  
 
   // Do the signature of the data PrKey(hash + timestamp)
   let message = clientAddr.substring(2) + X;
@@ -325,21 +308,12 @@ async function main() {
   console.log("\n");
   
   
+  // Send POST request to the server to get the measurement
   await axios.post(`${serverHost}buydata`, JSON.stringify(body), { httpsAgent: agent })
-  .then(async function (response) {
-
-    // Get the hashes of the transactions that contain the secret and the encrypted data
-    let txSecretHash = "0x" + parseFormat(response.data.TxSecretHash, 'base64', 'hex');
-    let txDataHash = "0x" +  parseFormat(response.data.TxDataHash, 'base64', 'hex')
-
-    console.log("\nYou can find X in the following transactions:");
-    console.log("Key to decipher X: " + txSecretHash);
-    console.log("X encrypted: " + txDataHash);
-
-    // Get the value of X
-    let measurement = await decryptMeasurement(web3, txSecretHash, txDataHash, privateKey);
-
-    console.log("\nValue of X:");
+  .then(function (response) {
+    // Retrieve the measurement from the response
+    let measurement = response.data;
+    console.log("\n\nMeasurement Bought:\n");
     console.log(measurement);
     
   })

@@ -17,8 +17,7 @@ contract dataLedgerContract
     
     accessControlContract accessContract;
     
-    event evtStoreInfo(bytes32 indexed _hash, string _uri);
-    event deleteInfo(bytes32 indexed _hash);
+    event evtStoreInfo(bytes32 _hash, string _uri);
     address admin = 0x21A018606490C031A8c02Bb6b992D8AE44ADD37f;
     
     mapping(bytes32  => dataStruct) ledger;
@@ -52,20 +51,6 @@ contract dataLedgerContract
         return (ledger[hash].uri, ledger[hash].description);
     }
     
-    // Deletes a measurement from the blockchain
-    function deleteMeasurement(bytes32 hash) public 
-    {
-        // Only the admin user can delete a measurement from the blockchain
-        require(msg.sender == admin
-        , "You do not have enough privileges to do this action");
-        
-        // Delete the measurement associated to the hash indicated by the admin
-        delete ledger[hash];
-        
-        // Emit an event that indicates the time when the element was remove
-        emit deleteInfo(hash);
-    }
-    
     // Access the mapping stored in the contract accessControl
     
     // Set the address where the access control contract is stored 
@@ -82,4 +67,3 @@ contract dataLedgerContract
     }
     
 }
-
