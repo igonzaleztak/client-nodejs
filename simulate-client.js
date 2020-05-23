@@ -16,18 +16,18 @@ const https = require('https');
 
 
 /***************** Global variables *********************/
-const gethPath = '/home/ivan/Desktop/demoPOA2/new-node/geth.ipc';
+//const gethPath = '/home/ivan/Desktop/demoPOA2/new-node/geth.ipc';
+const gethPath = '/home/ivan/Desktop/demoPOA2/client-node/geth.ipc'
 const web3 = new Web3(gethPath, net);
+
+// Folder where the private key is kept
+const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
 //const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
-const X = "dd550c74982695ef521a9ac7e6cf79dfcbe1108d34bdc2841981c9f27f7f01c4";
+const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
 const serverHost = 'http://127.0.0.1:5051/'
 //const serverHost = 'https://127.0.0.1:8051/'
-
-// Variable used for TOTP
-const maxTime = 3000;
-
 
 // The following line is to accept TLS connections with self-signed certificates
 const agent = new https.Agent({ rejectUnauthorized: false });
@@ -61,6 +61,20 @@ function parseFormat(text, from, to) {
   return Buffer.from(text, from).toString(to);
 }
 
+/**
+ * Get the file, which contains the parameters to extract the
+ * private key of an ethereum account.
+ * @param {String} path 
+ * @param {String} pattern
+ * @return {String} 
+ */
+function getFilesFromPath(path, pattern)
+{
+  let dir = fs.readdirSync(path);
+  return dir.filter( fn => fn.match(pattern));
+}
+
+
 
 /**
  * Gets the private key of the client
@@ -68,8 +82,12 @@ function parseFormat(text, from, to) {
  * @return {String} private key and public key
  */
 function getClientKeys(password) {
-  // File in which the elements to obtain the private key are stored
-  let utcFile = "./client-keystore";
+  // Get the UTC file that has the parameters to extract the 
+  // private key 
+  let pattern = new RegExp(".*" + clientAddr.substring(2), "i");
+  let utcFile = "" + folder + getFilesFromPath(folder, pattern)[0];
+
+  // Get the wallet associated to the client's account
   let clientWallet = Wallet.fromV3(fs.readFileSync(utcFile).toString(), password, true);
 
   return [clientWallet.getPrivateKey().toString('hex'), clientWallet.getPublicKey().toString('hex')]
@@ -244,10 +262,11 @@ async function main() {
       gasPrice: '0',
       gas: 400000
     }).catch((err) => { throw (err) });
-  }
+  }  
 
   // Get the price of X
-  let price = await balanceContract.methods.getPriceData(web3.utils.hexToBytes("0x" + X)).call();
+  let price = await balanceContract.methods.getPriceData("0x" + X).call()
+  .catch((err) => {throw (err)});
   console.log("Price of X: ", price);
   if (price == 0) {
     process.exit()
@@ -288,7 +307,7 @@ async function main() {
     console.log("\nValue of X:");
     console.log(measurement);
     process.exit()
-  }
+  }  
 
   // Do the signature of the data PrKey(hash + timestamp)
   let message = clientAddr.substring(2) + X;
