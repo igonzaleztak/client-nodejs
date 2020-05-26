@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blockchain Explorer</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- Web3 -->
+    <script src="scripts/web3.js" type="text/javascript"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>-->
+
+    <!-- Explorer script -->
+  <script type="text/javascript" src="scripts/blocks-explorer.js"></script>
+
+  <script>
+    window.addEventListener('load', async function () 
+    {
+      if (typeof web3 !== 'undefined') 
+      {
+          window.web3 = new Web3(web3.currentProvider);
+      } else 
+      {
+          window.web3 = new Web3(new Web3.providers.WebsocketProvider("ws://127.0.0.1:33019"));
+      }
+
+      getBlockInfo();
+    });
+  </script>
+
+  <script>
+    function logout()
+    {
+      creatXhrRequest('/logout', null, function(err, resp)
+      {
+        window.location.replace("https://127.0.0.1:8055/");
+      });
+    }
+  </script>
+
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style/style.css">
+
+
+  </head>
+  <body>
+    <div class="topnav">
+      <a class="active" href="index.html">Home</a>
+      <a href="data.html">Data available</a>
+      <a href="wallet.html">Wallet</a>
+      <div class="account">
+        <a href="wallet.html" id="account"></a>
+        <input  type="image" src="images/logout.png" id="logoutButton" onclick="logout()">
+      </div>
+    </div>
+
+    <script>
+      document.getElementById('account').innerText = document.cookie.split("=")[1];
+    </script>
+
+    
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 text-center" >
+          <h1>Blockchain Explorer</h1>
+          <h3> Latest 10 blocks </h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Block</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col" id="tableHash">Hash of the block</th>
+              </tr>
+            </thead>
+            <tbody id="lastBlock">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="col-lg-12 text-center">
+        <h4>Transactions stored in the block</h4><br>
+      </div>
+      <p>Insert hash of the block: <input type="text" id="blockHashInput" size="60"></p>
+      <input type="button" value="Get Transactions" onclick=getTransactionsFromBlock()>
+      <br>
+      <p id="returnTransactions"></p>
+    </div>
+    <div class="container">
+      <div class="col-lg-12 text-center">
+        <br>
+        <h4>Show transaction info</h4><br>
+      </div>
+      <p>Insert transaction's hash: <input type="text" id="txHashInput" size="60"></p>
+      <input type="button" value="Get info", onclick=getTransactionInfo()>
+      <br><br>
+      Hash: <p id="txHash"></p>
+      From: <p id="txFrom"></p>
+      Input: <p id="txInput"></p>
+    </div>
+  </body>
+</html>

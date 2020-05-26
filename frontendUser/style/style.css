@@ -1,0 +1,140 @@
+body {
+  padding-top: 0;
+  background-color: #e9ebee;
+}
+h1 {
+  margin: 20px 0px;
+}
+
+.wy-nav-content{
+  margin: auto;
+  max-width: 1020px;
+  background-color: #f2f2f2;
+}
+
+.container {
+  max-width: 960px;
+  background-color: #f2f2f2;
+}
+
+p {
+  word-break: break-all;
+}  
+
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+th, td {
+  width: 33%;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+#loginBox {
+  padding: 80px;
+  text-align: center;
+}
+
+#box2 {
+  background-color: #f2f2f2;
+}
+
+#loginHeader {
+  padding: 18px;
+}
+
+.spaceBox {
+  padding: 12px 0;
+}
+#buttonLogin {
+  background-color: #4CAF50;
+  color: #f2f2f2;
+  border: 0ch;
+  height: 50px;
+  width: 30%;
+} 
+
+.account {
+  text-align: left;
+  float: right;
+}
+
+.separator {
+  padding-top: 5%;
+  background-color: #f2f2f2;
+}
+
+
+#purchaseTable {
+  table-layout: fixed;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 400px;
+  max-width: 100%;
+  display: block;
+}
+
+
+
+#purchaseTable td {
+  width: 30%;
+  overflow-wrap: break-word;
+}
+
+
+#purchaseTable #purchasePrice, #purchaseTable #purchaseState{
+  width: 15%;
+  word-wrap: break-word;
+}
+
+
+.modal .modal-dialog {
+  max-width: 850px;
+  max-height: 850px;
+  word-break: break-all;
+}
+
+#doSpace {
+  padding-top: 30px;
+}
+
+#dataTable{
+  table-layout: fixed;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+#dataTable #dataPrice {
+  width: 9%;
+}
+
+#logoutButton{
+  padding-top: 10px;
+  height: 40px;
+}

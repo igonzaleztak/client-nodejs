@@ -15,8 +15,8 @@ contract balanceContract
     dataLedgerContract dataContract;
     
     // This variable is used to check if an account has bought
-    // a piece of data
-    mapping(address => mapping(bytes32 => bool)) hasPayed;
+    // a measurement
+    mapping(address => mapping(bytes32 => bool)) hasPaid;
     
     // Balance of the owner
     uint256 balance;
@@ -68,7 +68,7 @@ contract balanceContract
         
         // Check that the user is not trying to buy something that
         // is already bought
-        assert(hasPayed[msg.sender][hash] != true);
+        assert(hasPaid[msg.sender][hash] != true);
         
         // Check if the hash exists
         (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
@@ -81,18 +81,18 @@ contract balanceContract
         // Update the balance of the owner
         balance += catalogue[hash];
         
-        // Update the hasPayed function to true
-        hasPayed[msg.sender][hash] = true;
+        // Update the hasPaid function to true
+        hasPaid[msg.sender][hash] = true;
         
         // Emitting the event 
         emit purchaseNotify(msg.sender, hash, catalogue[hash]);
     }
     
     
-    // Function that checks the value of hasPayed
-    function checkHasPayed(address clientAccount, bytes32 hash) public view returns (bool)
+    // Function that checks the value of hasPaid
+    function checkHasPaid(address clientAccount, bytes32 hash) public view returns (bool)
     {
-        return hasPayed[clientAccount][hash];
+        return hasPaid[clientAccount][hash];
     }
     
     
@@ -103,7 +103,7 @@ contract balanceContract
         assert(msg.sender == admin);
         
         // Set to false the hash
-        hasPayed[clientAccount][hash] = false;
+        hasPaid[clientAccount][hash] = false;
         
         // Emitting the event to assure that the response has been sent
         emit responseNotify(clientAccount, hash, txHashExchange, txHashData);

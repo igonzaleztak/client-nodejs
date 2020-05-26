@@ -81,7 +81,7 @@
 				"type": "bytes32"
 			}
 		],
-		"name": "checkHasPayed",
+		"name": "checkHasPaid",
 		"outputs": [
 			{
 				"internalType": "bool",
