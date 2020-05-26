@@ -25,7 +25,7 @@ const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
 //const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
-const X = "91b3d13234a95f5c3e6c709fca7de2237d931af18852d497a6a02dd561ddb361";
+const X = "b9d30dcfb4cce524294632b622f461d2f1955dbcae8bf58b9587ff2e48bffe5f";
 const serverHost = 'http://127.0.0.1:5051/'
 //const serverHost = 'https://127.0.0.1:8051/'
 
@@ -143,7 +143,7 @@ function ecdsaSign(message, privateKey)
 {
   // Hash the message and sign it
   let hash = crypto.createHash('SHA256').update(message).digest(); 
-  let sig =  secp256k1.ecdsaSign(hash, Buffer.from(privateKey, 'hex'));  
+  let sig = secp256k1.ecdsaSign(hash, Buffer.from(privateKey, 'hex'))
   return sig;
 }
 
@@ -292,6 +292,8 @@ async function main() {
       gas: 400000
     }).catch((err) => { throw (err) });
   }
+
+  console.log("algo")
 
   // Check if the event has already been paid to the client
   let [hasTheDataBeenGiven, txSecretHash, txDataHash] = await checkIfDataHasBeenGiven(web3, balanceContract);
