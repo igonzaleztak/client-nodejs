@@ -25,7 +25,7 @@ const web3 = new Web3(gethPath, net);
 const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
-const X = "a01d72423f813f32142b5dea22c891aedff507353b30efb8ab1464facba5f81a";
+const X = "19c52b1fc673cddfa42eceebf4839adb71e951de404f810bbcd7c98f47996cd6";
 
 // URL of the server
 //const serverHost = 'http://127.0.0.1:5051/'
