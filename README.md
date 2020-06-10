@@ -28,4 +28,4 @@ The the port in which the server is listening can be changed modifying the value
 https.createServer(options, appHTTPS).listen(8055);
 ```
 
-If this value if change, you have to change the value of the host address in the scripts of the frontend.
+If this value is changed, you have to modify the value of the host address in the scripts of the frontend.
