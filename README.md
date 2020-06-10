@@ -13,9 +13,19 @@ appHTTPS.use('/restricted', requiresLogin,  express.static("frontendUser"));
 
 In the previous code, you can see that there is two diferente paths. One is used by the user before he logs in the blockchain.  In this frontend the user can only see the blocks that forms the blockchain and the measurements that ara available to be purchased. It also has a web page where the user can log in the blockchain.
 
-After the user is logged successfully in the blockchain, he goes to the path ````/restricted````. In this one, the user can also see the blocks of the blockchain and the measurements that are available. However, the user has also a path where he can purchase new data.
+After the user is logged successfully in the blockchain, he goes to the path ````/restricted````. In this one, the user can also see the blocks of the blockchain and the measurements that are available. However, in this path the user can also see the data that he has purchased and buy new data.
 
-To authenticate the user in the blockchain via the web site, we have programmed a middleware which checks that address and the password used by the client are correct. To do so, we use the callback:
-````
-let authenticateUser = async function(account, password, callback)
-````
+
+To run the server just use the following order:
+```Bash
+nodejs main.js 
+```
+
+To access the endpoint of the client, go to `https://127.0.0.1:8055/`.
+
+The the port in which the server is listening can be changed modifying the value of the following line:
+```javascript
+https.createServer(options, appHTTPS).listen(8055);
+```
+
+If this value if change, you have to change the value of the host address in the scripts of the frontend.
