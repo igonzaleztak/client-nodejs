@@ -1,6 +1,13 @@
 # Module for the client
 This is a nodejs server which is connected to the client's blockchain node. The idea behind this component is to host a web page where the user can see and purchase the measurements produced by the sensors.
 
+The connection between the server and the client's blockchain node is set via IPC as it can be seen in the following lines:
+
+````Javascript
+const gethPath = '/home/ivan/Desktop/demoPOA2/client-node/geth.ipc';
+const web3 = new Web3(gethPath, net);
+````
+
 The web page is hosted using the nodejs library ```express``` like is shown in the following lines.
 
 ````Javascript
