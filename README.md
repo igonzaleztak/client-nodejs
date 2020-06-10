@@ -16,5 +16,6 @@ In the previous code, you can see that there is two diferente paths. One is used
 After the user is logged successfully in the blockchain, he goes to the path ````/restricted````. In this one, the user can also see the blocks of the blockchain and the measurements that are available. However, the user has also a path where he can purchase new data.
 
 To authenticate the user in the blockchain via the web site, we have programmed a middleware which checks that address and the password used by the client are correct. To do so, we use the callback:
+````
 let authenticateUser = async function(account, password, callback)
-
+````
