@@ -3,7 +3,7 @@ This is a nodejs server which is connected to the client's blockchain node. The 
 
 The web page is hosted using the nodejs library ```express``` like is shown in the following lines.
 
-````
+````Javascript
 // Index html without login
 appHTTPS.use('/public', express.static("frontendHome"));
 
