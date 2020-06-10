@@ -1,5 +1,5 @@
 const Web3 = require('web3');
-const blockchain = require('./libs/blockchain.js');
+const blockchain = require('../libs/blockchain.js');
 const net = require('net');
 
 //const gethPath = '/home/ivan/Desktop/scripted-IBFT-network/new-node/geth.ipc';

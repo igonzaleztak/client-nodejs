@@ -1,6 +1,6 @@
 const Web3 = require('web3');
 const net = require('net');
-const blockchain = require('./libs/blockchain.js');
+const blockchain = require('../libs/blockchain.js');
 const fs = require('fs');
 const Wallet = require('ethereumjs-wallet');
 const readline = require('readline-sync');
