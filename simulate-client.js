@@ -1,6 +1,7 @@
 const Web3 = require('web3');
 const net = require('net');
 const blockchain = require('./libs/blockchain.js');
+const access = require('./libs/accessControl.js');
 const fs = require('fs');
 const Wallet = require('ethereumjs-wallet');
 const readline = require('readline-sync');
@@ -25,7 +26,7 @@ const web3 = new Web3(gethPath, net);
 const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
-const X = "19c52b1fc673cddfa42eceebf4839adb71e951de404f810bbcd7c98f47996cd6";
+const X = "1a4a0cc72c5e728016ba8f7abfe0d1ee34ee71e2a96a7029c3954e9fc2f58eb3";
 
 // URL of the server
 //const serverHost = 'http://127.0.0.1:5051/'
@@ -64,55 +65,21 @@ function parseFormat(text, from, to) {
 }
 
 /**
- * Get the file, which contains the parameters to extract the
- * private key of an ethereum account.
- * @param {String} path 
- * @param {String} pattern
- * @return {String} 
- */
-function getFilesFromPath(path, pattern)
-{
-  let dir = fs.readdirSync(path);
-  return dir.filter( fn => fn.match(pattern));
-}
-
-
-
-/**
- * Gets the private key of the client
- * @param {String} password
- * @return {String} private key and public key
- */
-function getClientKeys(password) {
-  // Get the UTC file that has the parameters to extract the 
-  // private key 
-  let pattern = new RegExp(".*" + clientAddr.substring(2), "i");
-  let utcFile = "" + folder + getFilesFromPath(folder, pattern)[0];
-
-  // Get the wallet associated to the client's account
-  let clientWallet = Wallet.fromV3(fs.readFileSync(utcFile).toString(), password, true);
-
-  return [clientWallet.getPrivateKey().toString('hex'), clientWallet.getPublicKey().toString('hex')]
-}
-
-/**
  * Logs in to the ethreum account
- * @return privateKey of the user
+ * @return {String} privateKey of the user
+ * @return {String} publicKey of the user
  */
 async function loginAccount() {
   let privateKey = "";
   let publicKey = "";
 
-  // Login the client
+  // Login the client by getting his private and public key
   let password = "" + readline.question("Introduce password:\n");
   console.log("\nLogin into the account, please wait");
   try {
-    [privateKey, publicKey] = getClientKeys(password);
+    privateKey = access.getPrivateKey(web3, clientAddr, password);
+    publicKey = access.getPublicKey(privateKey);
     console.log("Login Correct");
-
-    // Once the client has logged in, he unlocks the account
-    // in the blockchain
-    await unlockAccount(password);
   }
   catch (error) {
     console.log("Login Incorrect");
@@ -149,100 +116,11 @@ function ecdsaSign(message, privateKey)
   return sig;
 }
 
-/**
- * Decrypts a message encrypted with AES-256-GMC
- * @param {Buffer} key 
- * @param {Buffer} secret 
- */
-async function decryptAES(key, secret)
-{
-  // Constant variables
-  const ivSize = 12;
-  const tagSize = 16;
-  
-  // Get the IV
-  let iv = secret.slice(0, ivSize);  
-
-  // Get the ciphertext 
-  let ciphertext = secret.slice(ivSize, secret.length - tagSize);
-  
-  // Get the authentication tag
-  let tag = secret.slice(secret.length - tagSize, secret.length)
-
-  // Decrypt the text
-  let decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);  
-  decipher.setAuthTag(tag)
-  let plaintext = decipher.update(ciphertext, null, 'utf8');
-  plaintext += decipher.final('utf8')
-
-  return plaintext
-}
-
-/**
- * Check whether the data has been given to the client or not
- * @param {Web3} web3
- * @param {Contract} balanceContract
- * @returns {Boolean} True or false
- * @returns {String} txSecretHash
- * @returns {String} TxDataHash
- */
-async function checkIfDataHasBeenGiven(web3, balanceContract) 
-{
-  // Look for the event in the blockchain
-  let filter = {
-    _addr: web3.utils.toChecksumAddress(clientAddr),
-    _hash: "0x" + X
-  }
-  let events = await balanceContract.getPastEvents("responseNotify", {filter, fromBlock: 0})
-  .catch((err) => {throw (err)});
-
-  if (events.length == 0){
-    return [false, null, null]
-  }
-
-  // Get the hashes of the transactions that contain the secret and the encrypted data
-  txSecretHash = events[0].returnValues._txHashExchange;
-  txDataHash = events[0].returnValues._txHashData;
-
-  return [true, txSecretHash, txDataHash]
-}
-
-
-/**
- * Decrypts the measurement that the client has purchase
- * @param {web3} web3
- * @param {String} txSecretHash 
- * @param {String} txDataHash 
- * @param {Buffer} privateKey
- * @returns {returns} measurement in plain text
- */
-async function decryptMeasurement(web3, txSecretHash, txDataHash, privateKey)
-{    
-  // Get the transaction data of these hashes
-  let txSecret = (await web3.eth.getTransaction(txSecretHash)
-  .catch((err) => {throw(err)})).input;
-  let txData = (await web3.eth.getTransaction(txDataHash)
-  .catch((err) => {throw(err)})).input
-
-  // Convert the input to Object
-  let encryptedSecret = (JSON.parse(parseFormat(txSecret.substring(2), 'hex', 'utf8'))).ClientSecret;
-
-  // Decrypt the secret using the private key
-  let key = eciesjs.decrypt(privateKey, Buffer.from(encryptedSecret, 'base64'));
-
-  // Use the key to decipher the measurement
-  let plain = decryptAES(key, Buffer.from(txData.substring(2), 'hex'));  
-
-  return plain
-}
-
-
-
 /********************* MAIN FUNCTION **************************************/
 async function main() {
   // Login into the client's account and returns his keys
   const [privateKey, publicKey] = await loginAccount();
-
+  
   // Balance Contract
   const balanceContract = await blockchain.initContract(web3
     , blockchain.balanceABI
@@ -255,25 +133,22 @@ async function main() {
 
   // Check if the user has already stored his public key in the blockchain
   let keyStored = await accesContract.methods.getPubKey(web3.utils.toChecksumAddress(clientAddr)).call();
-  if (keyStored == "") {
+    
+  if (keyStored == "") 
+  {
     console.error("The user has not stored his public key yet");
 
     // Store the client's public key in the blockchain
-    await accesContract.methods.addPubKey(publicKey).send({
-      from: clientAddr,
-      gasPrice: '0',
-      gas: 400000
-    }).catch((err) => { throw (err) });
+    await blockchain.sendTransactionContract(web3, accesContract.methods.addPubKey(publicKey), privateKey)
+    .catch(err => {throw (err)});
   }  
   
-
   // Get the price of X
   let price = await balanceContract.methods.getPriceData("0x" + X).call()
   .catch((err) => {throw (err)});
+
   console.log("Price of X: ", price);
-  if (price == 0) {
-    process.exit()
-  }
+  if (price == 0) process.exit();
 
   // Check if X has already been bought
   let filter =
@@ -289,17 +164,19 @@ async function main() {
   // If there is not an event, It means that this account has not bought the measurement yet
   if (events.length == 0) 
   {
-    // Buy X        
-    await balanceContract.methods.payData(Buffer.from(X, 'hex')).send({
-      from: clientAddr,
-      gasPrice: '0',
-      gas: 400000
-    }).catch((err)=>{throw (err)});
+    // Buy X
+    await blockchain.sendTransactionContract(web3, balanceContract.methods.payData(Buffer.from(X, 'hex')), privateKey)
+    .catch((err) => {
+      console.log(err);
+      resp.sendStatus(405);
+      resp.end();
+      return ; 
+    });
   }
 
   // Do the signature of the data PrKey(hash + timestamp)
   let message = clientAddr.substring(2) + X;
-  let signature = (ecdsaSign(message, privateKey)).signature;  
+  let signature = (ecdsaSign(message, privateKey.substring(2))).signature;  
 
   // Send the info to the server so it can process the purchase
   let body =
