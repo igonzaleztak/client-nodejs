@@ -183,7 +183,7 @@ module.exports.balanceSendToClient =  function(myContract
 			to: 			transaction._parent._address,
 			data: 		transaction.encodeABI(),
 			gasPrice: '0',
-			gas:	await transaction.estimateGas()	
+			gas:	400000
 		};
 
 		let signedTransaction = await web3.eth.accounts.signTransaction(options, privKey);
