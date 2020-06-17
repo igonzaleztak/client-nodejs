@@ -173,5 +173,20 @@ module.exports.balanceSendToClient =  function(myContract
 			else resolve(resp);
 		});
 	});
-
 }
+
+	// Send transaction to contract
+	module.exports.sendTransactionContract = async function(web3, transaction, privKey)
+	{
+		let options =  
+		{
+			to: 			transaction._parent._address,
+			data: 		transaction.encodeABI(),
+			gasPrice: '0',
+			gas:	await transaction.estimateGas()	
+		};
+
+		let signedTransaction = await web3.eth.accounts.signTransaction(options, privKey);
+		let receipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
+		return receipt;
+	}

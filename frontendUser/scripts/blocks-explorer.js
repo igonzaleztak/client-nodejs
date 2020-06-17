@@ -1,4 +1,4 @@
-const hostURL = "https://127.0.0.1:8051"
+const hostURL = "https://127.0.0.1:8055"
 
 
 async function getLastBlockNumber() {
@@ -71,21 +71,6 @@ let creatXhrRequest =  function (resource, object, callback)
     req.send(null);
   }
 }
-
-/**
- * Gets the last 5 blocks
- */
-/*async function getBlockInfo() 
-{
-  creatXhrRequest('/block-explorer', null, function(err, arrayObjects)
-  {
-    arrayObjects.forEach(object => {
-      $('tbody').append("<tr><td>" + object.number + "</td><td>" + object.timestamp + "</td><td>" + object.hash + "</td><td>");
-    });
-
-  });
-
-}*/
 
 /**
  * Gets the last 5 blocks

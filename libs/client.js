@@ -7,7 +7,7 @@ const secp256k1 = require('secp256k1');
 const axios = require('axios');
 
 
-
+const blockchain = require('../libs/blockchain');
 
 
 /***************** Global variables ***************************************************/
@@ -29,37 +29,6 @@ function buf2hex(arrayBuffer)
 }
 
 /**
- * Get the file, which contains the parameters to extract the
- * private key of an ethereum account.
- * @param {String} path 
- * @param {String} pattern
- * @return {String} 
- */
-function getFilesFromPath(path, pattern)
-{
-  let dir = fs.readdirSync(path);
-  return dir.filter( fn => fn.match(pattern));
-}
-
-/**
- * Gets the private key of the client
- * @param {String} password
- * @return {String} private key and public key
- */
-function getClientKeys(clientAddr, password) {
-  // Get the UTC file that has the parameters to extract the 
-  // private key 
-  let pattern = new RegExp(".*" + clientAddr.substring(2), "i");
-  let utcFile = "" + folder + getFilesFromPath(folder, pattern)[0];
-
-  // Get the wallet associated to the client's account
-  let clientWallet = Wallet.fromV3(fs.readFileSync(utcFile).toString(), password, true);
-
-  return [clientWallet.getPrivateKey().toString('hex'), clientWallet.getPublicKey().toString('hex')]
-}
-
-
-/**
  * Parses text from format1('from') to format2('to')
  * E.g: to parseFormat string to hex
  *       hex = parseFormat(text, 'utf8', 'hex')
@@ -73,6 +42,18 @@ function parseFormat(text, from, to)
   return Buffer.from(text, from).toString(to);
 }
 
+/**
+ * Gets the public key of the client from his private key
+ * @param {String} privateKey 
+ * @return {String} publicKey
+ */
+function getPublicKey(privateKey)
+{
+  let privateKeyBuffer =Buffer.from(privateKey.substring(2), 'hex');
+  let wallet = Wallet.fromPrivateKey(privateKeyBuffer);
+  
+  return wallet.getPublicKey().toString('hex');
+}
 
 /**
  * Decrypts a message encrypted with AES-256-GMC
@@ -114,7 +95,7 @@ function ecdsaSign(message, privateKey)
 {
   // Hash the message and sign it
   let hash = crypto.createHash('SHA256').update(message).digest(); 
-  let sig = secp256k1.ecdsaSign(hash, Buffer.from(privateKey, 'hex'))
+  let sig = secp256k1.ecdsaSign(hash, Buffer.from(privateKey.substring(2), 'hex'))
   return sig;
 }
 
@@ -153,22 +134,19 @@ async function decryptMeasurement(web3, txSecretHash, txDataHash, privateKey)
  * Deciphers the input of the transaction and sends it to the client
  * @param {JSON.Stringify} body 
  * @param {String} account 
- * @param {String} password 
+ * @param {String} privateKey 
  * @param {Contract} balanceContract 
  * @param {Web3} web3 
  * @param {res} res 
  */
 async function getInput(body
   , account
-  , password
+  , privateKey
   , balanceContract
   , web3
   , res)
 {
   let hash = JSON.parse(body).hash;
-
-  // Get the private key of the client
-  let [privateKey, publicKey] = getClientKeys(account, password);
 
   // Get the event that holds the payment
   let filter = 
@@ -205,19 +183,16 @@ async function getInput(body
  * Function used by the client to purchase a measurement
  * @param {String} body 
  * @param {String} clientAddr 
- * @param {String} password 
+ * @param {String} privateKey 
  * @param {Contract} balanceContract 
  * @param {Contract} accesContract
  * @param {Web3} web3
  * @param {Express.response} resp 
  */
-async function buyData(bodyReq, clientAddr, password, balanceContract, accesContract, web3, resp)
+async function buyData(bodyReq, clientAddr, privateKey, balanceContract, accesContract, web3, resp)
 {
   // Get the hash of the info
   let X = (JSON.parse(bodyReq).hash).substring(2); 
-
-  // Get the private key and the public key of the client
-  let [privateKey, publicKey] = getClientKeys(clientAddr, password);
 
   // Do the signature of the data PrKey(hash + timestamp)
   let message = clientAddr.substring(2) + X;
@@ -228,12 +203,12 @@ async function buyData(bodyReq, clientAddr, password, balanceContract, accesCont
   if (keyStored == "") {
     console.error("The user has not stored his public key yet");
     
+    // Get the public key
+    let publicKey = getPublicKey(privateKey);
+
     // Store the client's public key in the blockchain
-    await accesContract.methods.addPubKey(publicKey).send({
-      from: clientAddr,
-      gasPrice: '0',
-      gas: 400000
-    }).catch((err) => { throw (err) });
+    await blockchain.sendTransactionContract(web3, accesContract.methods.addPubKey(publicKey), privateKey)
+    .catch(err => {throw (err)});
 
   }  
 
@@ -265,20 +240,15 @@ async function buyData(bodyReq, clientAddr, password, balanceContract, accesCont
   {
     // Get the price of the data
     let price = await balanceContract.methods.getPriceData("0x" + X).call();
-
-    // Buy data
-    await balanceContract.methods.payData(Buffer.from(X, 'hex'), price).send({
-      from: clientAddr,
-      gasPrice: '0',
-      gas: 400000
-    }).catch((err) => {
+    
+    await blockchain.sendTransactionContract(web3, balanceContract.methods.payData(Buffer.from(X, 'hex'), price), privateKey)
+    .catch((err) => {
       console.log(err);
       resp.sendStatus(405);
       resp.end();
       return ; 
     });
   }
-
   // Check if the producer has already paid the data
   let array = await balanceContract.getPastEvents('responseNotify', {filter, fromBlock: 0});  
   if (array.length != 0) 

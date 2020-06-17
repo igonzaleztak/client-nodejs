@@ -10,6 +10,7 @@ const session = require('express-session');
 
 const blockchain = require('./libs/blockchain.js');
 const client = require('./libs/client');
+const access = require('./libs/accessControl');
 
 /***************** Global variables *********************/
 const gethPath = '/home/ivan/Desktop/demoPOA2/client-node/geth.ipc';
@@ -66,14 +67,15 @@ const accessContract = blockchain.initContract(web3
  */
 let authenticateUser = async function(account, password, callback)
 {
-  // Authenticate the user against the blockchain
-  let unlock = await web3.eth.personal.unlockAccount(account, password);
+  // Get the client's private key from the wallet
+  let privKey = access.getPrivateKey(web3, account, password);  
     
-  if (unlock) return callback(null, account, password);
+  // If the password is correct then the privatekey will be different than null
+  if (privKey) return callback(null, account, password, privKey);
   else 
   {
     let err = new Error("The account and/or the password  you introduced are wrong");
-    return callback(err, null, null);
+    return callback(err, null, null, null);
   }
 };
 
@@ -113,13 +115,13 @@ appHTTPS.post('/login', function(req, res)
     let password = JSON.parse(body).password;
       
     // Check if the login is correct
-    authenticateUser(account, password, function(err, account, password)
+    authenticateUser(account, password, function(err, account, password, privKey)
     {      
       if (err) return (err);
       console.log("User " + account + " has been authenticated");
       
       req.session.userID = account;
-      req.session.password = password;
+      req.session.privKey = privKey;
 
       res.cookie('userAccount', account);
       res.writeHead(200, {'Content-Type': 'text/plain'});
@@ -160,7 +162,7 @@ appHTTPS.post('/input', requiresLogin, function(req, resp)
     // Decipher the input of the transaction
     client.getInput(body
       , req.session.userID
-      , req.session.password
+      , req.session.privKey
       , balanceContract
       , web3
       , resp);
@@ -180,7 +182,7 @@ appHTTPS.post('/buydata', requiresLogin, function(req, resp)
   {    
     client.buyData(body
       , req.session.userID
-      , req.session.password
+      , req.session.privKey
       , balanceContract
       , accessContract
       , web3
