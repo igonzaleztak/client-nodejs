@@ -27,6 +27,7 @@ contract balanceContract
     struct clientVariables 
     {
         mapping(bytes32 => hashVariables) purchases;
+        uint256 purchaseCounter; 
     }
     
     struct hashVariables
@@ -42,6 +43,8 @@ contract balanceContract
     // User Purchases
     mapping(address => clientVariables) userPurchases;
     
+    // Max number of purchased without confirmation allowed
+    uint256 MAX_PURCHASES = 1; 
     
     // Balance of the owner
     uint256 balance;
@@ -96,8 +99,15 @@ contract balanceContract
         require(userPurchases[msg.sender].purchases[hash].purchaseInProcess == false
         , "The proccess of this purchase is still on going");
         
+        // Check whether the user is allowed to buy more purchases
+        require(userPurchases[msg.sender].purchaseCounter < MAX_PURCHASES
+        , "There are measurements that has not been confirmed yet");
+        
         // Indicates that the process of the purchase has started
         userPurchases[msg.sender].purchases[hash].purchaseInProcess = true;
+        
+        // Add one to the counter
+        userPurchases[msg.sender].purchaseCounter += 1;
         
         // Emit event indicating that the client has bought a measurement
         emit purchaseNotify(msg.sender, hash, getPriceData(hash));
@@ -121,6 +131,9 @@ contract balanceContract
         
         // Set the variable pruchasInProcess to false
         userPurchases[client].purchases[hash].purchaseInProcess = false;
+        
+        // Substract one from the purchase counter of the client
+        userPurchases[client].purchaseCounter -= 1;
         
         // Emit event indicating that the admin has sent the OTP to the client
         emit responseNotify(client, hash, txHashOTP);

@@ -14,6 +14,7 @@ const eciesjs = require('eciesjs');
 
 const axios = require('axios');
 const https = require('https');
+const { log } = require('console');
 
 
 /***************** Global variables *********************/
@@ -26,7 +27,8 @@ const web3 = new Web3(gethPath, net);
 const folder = "/home/ivan/Desktop/demoPOA2/client-node/keystore/"
 
 const clientAddr = "0x5bab040bc593f57eda64ea431b14f182fe167f3f";
-const X = "1a4a0cc72c5e728016ba8f7abfe0d1ee34ee71e2a96a7029c3954e9fc2f58eb3";
+//const X = "1a4a0cc72c5e728016ba8f7abfe0d1ee34ee71e2a96a7029c3954e9fc2f58eb3";
+const X = "19c52b1fc673cddfa42eceebf4839adb71e951de404f810bbcd7c98f47996cd6";
 
 // URL of the server
 //const serverHost = 'http://127.0.0.1:5051/'
@@ -37,19 +39,6 @@ const agent = new https.Agent({ rejectUnauthorized: false });
 
 
 /******************** Functions ************************/
-
-/**
- * Unlocks the client's account
- * @param {String} password 
- */
-async function unlockAccount(password) {
-  await web3.eth.personal.unlockAccount(String(clientAddr), String(password), 600)
-    .catch((error) => {
-      throw (error);
-    });
-
-}
-
 
 /**
  * Parses text from format1('from') to format2('to')
@@ -168,9 +157,7 @@ async function main() {
     await blockchain.sendTransactionContract(web3, balanceContract.methods.payData(Buffer.from(X, 'hex')), privateKey)
     .catch((err) => {
       console.log(err);
-      resp.sendStatus(405);
-      resp.end();
-      return ; 
+      process.exit();
     });
   }
 
@@ -192,12 +179,37 @@ async function main() {
   
   // Send POST request to the server to get the measurement
   await axios.post(`${serverHost}buydata`, JSON.stringify(body), { httpsAgent: agent })
-  .then(function (response) {
+  .then(async function (response) {
     // Retrieve the measurement from the response
     let measurement = response.data;
+    let hashBought = (JSON.parse(measurement.attrMd))[0].value;
     console.log("\n\nMeasurement Bought:\n");
     console.log(measurement);
     
+
+    // Check if the client has already confirmed the measurement
+    let filter =
+    {
+      _addr: web3.utils.toChecksumAddress(clientAddr),
+      _hash: "0x" + X
+    };
+
+    // Get the event that holds the acknowledge of the purchase
+    let ack = (await balanceContract.getPastEvents('ackPurchase', {filter, fromBlock:0}));
+
+    // Check if the measurement has already been confirmed
+    if (ack.length != 0 ) return;
+    
+    // Check whether the measurement received is one which was bought or not
+    if (hashBought !== X) return;
+
+    // Confirm the measurement
+    await blockchain.sendTransactionContract(web3, balanceContract.methods.confirmData(Buffer.from(X, 'hex')), privateKey)
+    .catch(err => {
+      console.log(err);
+      process.exit();
+    });
+
   })
   .catch(async function (err) {
     console.log(err);
