@@ -50,7 +50,7 @@ function parseFormat(text, from, to)
 function getPublicKey(privateKey)
 {
   let privateKeyBuffer =Buffer.from(privateKey.substring(2), 'hex');
-  let wallet = Wallet.fromPrivateKey(privateKeyBuffer);
+  let wallet = Wallet.default.fromPrivateKey(privateKeyBuffer);
   
   return wallet.getPublicKey().toString('hex');
 }

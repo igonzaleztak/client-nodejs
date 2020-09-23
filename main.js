@@ -123,7 +123,7 @@ appHTTPS.post('/login', function(req, res)
       req.session.userID = account;
       req.session.privKey = privKey;
 
-      res.cookie('userAccount', account);
+      res.cookie('userAccount', web3.utils.toChecksumAddress(account));
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end();
     });

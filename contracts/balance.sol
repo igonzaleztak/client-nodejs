@@ -40,12 +40,12 @@ contract balanceContract
     // Function used by the admin user to set the prices of the data
     function setPriceData(bytes32 hash, uint256 price) public returns(bool)
     {
-        assert (msg.sender == admin);
+        require (msg.sender == admin, "Admin user required");
         
         // Check if the hash exists
         (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
-        assert (bytes(uri).length != 0);
-        assert(bytes(pubDate).length != 0);
+        require (bytes(uri).length != 0, "Hash is not stored in the Blockchain");
+        require(bytes(pubDate).length != 0, "Hash is not stored in the Blockchain");
         catalogue[hash] = price;
         
         return true;
@@ -64,11 +64,11 @@ contract balanceContract
     {
         // Confirm that the amount of money sent by the client 
         // is enough to buy the data
-        assert(tokens >= catalogue[hash]);
+        require(tokens >= catalogue[hash], "Not enough tokens");
         
         // Check that the user is not trying to buy something that
         // is already bought
-        assert(hasPaid[msg.sender][hash] != true);
+        require(hasPaid[msg.sender][hash] != true, "Client is already buying this event");
         
         // Check if the hash exists
         (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
