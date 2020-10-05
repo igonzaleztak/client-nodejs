@@ -164,8 +164,6 @@ async function getInput(body
       return next(error);
     }
 
-    let evt = events[0];
-
     // Get the hashes of the transactions that contain the secret and the encrypted data
     txSecretHash = events[0].returnValues._txHashExchange;
     txDataHash = events[0].returnValues._txHashData;
@@ -194,10 +192,6 @@ async function buyData(bodyReq, clientAddr, privateKey, balanceContract, accesCo
   // Get the hash of the info
   let X = (JSON.parse(bodyReq).hash).substring(2); 
 
-  // Do the signature of the data PrKey(hash + timestamp)
-  let message = clientAddr.substring(2) + X;
-  let signature = (ecdsaSign(message, privateKey)).signature;
-
   // Check if the user has already stored his public key in the blockchain
   let keyStored = await accesContract.methods.getPubKey(web3.utils.toChecksumAddress(clientAddr)).call();
   if (keyStored == "") {
@@ -211,18 +205,6 @@ async function buyData(bodyReq, clientAddr, privateKey, balanceContract, accesCo
     .catch(err => {throw (err)});
 
   }  
-
-  // Send the info to the server so it can process the purchase
-  let body =
-  {
-    _hash: "0x" + X,
-    _account: clientAddr,
-    _signature: "0x" + buf2hex(signature)
-  }
-  console.log("\n\nBody of the message:");
-  console.log(body);
-  console.log("\n");
- 
 
   // Check if X has already been bought
   let filter =
@@ -257,14 +239,6 @@ async function buyData(bodyReq, clientAddr, privateKey, balanceContract, accesCo
     resp.end();
     return ; 
   }
-
-  
-  // Query the server to indicate that the data has been bought
-  await axios.post(`${serverHost}buydata`, JSON.stringify(body), { httpsAgent: agent })
-  .catch(async function (err) {
-    console.log(err);
-    resp.sendStatus(500)
-  });
     
   // Successful response
   resp.sendStatus(200);

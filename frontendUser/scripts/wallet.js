@@ -100,8 +100,6 @@ async function expandObject(obj)
 
   // Hash of the data
   let hash =  $(obj).text();
-
-  console.log(hash);
   
 
   // Account of the user
