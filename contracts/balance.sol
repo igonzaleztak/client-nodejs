@@ -1,133 +1,159 @@
 pragma solidity >=0.4.0 <= 0.6.1;
 
 
-// Definition of the functions of the other contract that are going to be required
-// in this contract
-contract dataLedgerContract 
+contract balanceContract 
 {
-    function retrieveInfo(bytes32) public view returns (string memory, string memory) {}
-}
-
-
-contract balanceContract
-{
-    
-    dataLedgerContract dataContract;
-    
-    // This variable is used to check if an account has bought
-    // a measurement
-    mapping(address => mapping(bytes32 => bool)) hasPaid;
-    
-    // Balance of the owner
-    uint256 balance;
-    
-    // Prices of the data 
-    mapping(bytes32 => uint256) catalogue;
-    
-    // Address of the admin/owner of information
     address admin = 0x21A018606490C031A8c02Bb6b992D8AE44ADD37f;
-    
-    // Definition of the event that will be emitted when a purchase is made
-    event purchaseNotify(address indexed _addr, bytes32 indexed _hash, uint256 _value);
-    
-    // Event to store the info sent by the owner of the data to the clients 
-    // in the blockchain
-    event responseNotify(address indexed _addr, bytes32 indexed _hash, bytes32 _txHashExchange, bytes32 _txHashData);
-    
-    
-    /************************* Functions **********************************************/
-    
-    // Function used by the admin user to set the prices of the data
-    function setPriceData(bytes32 hash, uint256 price) public returns(bool)
+
+    // Struct that holds users suscriptions
+    struct userStruct 
     {
-        require (msg.sender == admin, "Admin user required");
+        // Variable that holds all the subscriptios of the user
+        mapping(bytes32 => bool) allSubs;
         
-        // Check if the hash exists
-        (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
-        require (bytes(uri).length != 0, "Hash is not stored in the Blockchain");
-        require(bytes(pubDate).length != 0, "Hash is not stored in the Blockchain");
-        catalogue[hash] = price;
+        // Variables that associate suscriptions to finaltimestamps
+        mapping(bytes32 => uint) subscriptions;
         
-        return true;
+        // Array that stores all the subscriptions
+        bytes32[] arraySubs;
+    
+        // mappin byte32 to index array
+        mapping(bytes32 => uint) indexArraySubs;
     }
     
-    
-    // Function to get the price of the data
-    function getPriceData(bytes32 hash) public view returns(uint256)
+    // Struct that holds the available Subscriptions
+    struct subsStruct 
     {
-        return catalogue[hash];
-    }
-    
-    
-    // Function to pay the data of the hash
-    function payData(bytes32 hash, uint256 tokens) public
-    {
-        // Confirm that the amount of money sent by the client 
-        // is enough to buy the data
-        require(tokens >= catalogue[hash], "Not enough tokens");
+        // Map that holds all the suscriptions
+        mapping(bytes32 => bool) allSubs;
         
-        // Check that the user is not trying to buy something that
-        // is already bought
-        require(hasPaid[msg.sender][hash] != true, "Client is already buying this event");
+        // Array that holds the ids available
+        bytes32[] availableTypes;
         
-        // Check if the hash exists
-        (string memory pubDate, string memory uri) = dataContract.retrieveInfo(hash);
-        assert (bytes(uri).length != 0);
-        assert(bytes(pubDate).length != 0);
-        
-        // Check that the element is available to buy (price != 0)
-        assert(getPriceData(hash) != 0);
-        
-        // Update the balance of the owner
-        balance += catalogue[hash];
-        
-        // Update the hasPaid function to true
-        hasPaid[msg.sender][hash] = true;
-        
-        // Emitting the event 
-        emit purchaseNotify(msg.sender, hash, catalogue[hash]);
-    }
-    
-    
-    // Function that checks the value of hasPaid
-    function checkHasPaid(address clientAccount, bytes32 hash) public view returns (bool)
-    {
-        return hasPaid[clientAccount][hash];
-    }
-    
-    
-    // Send the response to the clientAccount
-    function sendToClient(address clientAccount, bytes32 hash, bytes32 txHashExchange, bytes32 txHashData) public
-    {
-        // The only user that can send information to the client is the admin
-        assert(msg.sender == admin);
-        
-        // Set to false the hash
-        hasPaid[clientAccount][hash] = false;
-        
-        // Emitting the event to assure that the response has been sent
-        emit responseNotify(clientAccount, hash, txHashExchange, txHashData);
+        // mappin byte32 to index array
+        mapping(bytes32 => uint) indexAvailableTypes;
         
     }
     
+    // Mapping that associates users to userStruct
+    mapping(address => userStruct) usersSubs;
     
-    // Check the balance of the admin
-    function checkBalance() public view returns(uint256)
+    // Initialize global struct
+    subsStruct  subs;
+    
+    
+    // Event to notify new Subscriptions
+    event notifyNew(address indexed _addr, bytes32 indexed _subID, uint _endTime);
+    
+    // Event to notify the removal of Subscriptions
+    event notifyRemove(address indexed _addr, bytes32 indexed _subID);
+    
+    // Event to notify new categories
+    event notifyNewCategory(address indexed _addr, bytes32 indexed _name);
+    
+    // Event to notify the removal of categories
+    event notifyRemoveCategory(address indexed _addr, bytes32 indexed _name);
+    
+    /****************** Greeting ****************************/
+    function greet() pure public returns(string memory)
     {
-        assert(msg.sender == admin);
-        return balance;
+        return "Hello you have called the contract balance-subs.sol";
+    }
+    /*******************************************************/
+    
+    
+    // Endpoint used by costumers to subscribe to stuff
+    function subscribeTo(bytes32 subName, uint time) public 
+    {
+        // Check whether the requested subscription category exists
+        require(subs.allSubs[subName] == true, "The requested category does not exist");
+        
+        // Check whether the user is already subscribed
+        require(usersSubs[msg.sender].allSubs[subName] == false, "The user is already subscribe to that type");
+        
+        // Create the suscription in the user struct
+        usersSubs[msg.sender].allSubs[subName] = true;
+        usersSubs[msg.sender].subscriptions[subName] = now + time;
+        usersSubs[msg.sender].arraySubs.push(subName);
+        usersSubs[msg.sender].indexArraySubs[subName] = usersSubs[msg.sender].arraySubs.length;
+        
+        // Add the values of the suscription in the subsStruct
+        subs.allSubs[subName] = true;
+        
+        // Emit event
+        emit notifyNew(msg.sender, subName, now + time);
     }
     
     
-    
-    /****** Accessing the data of the other contract ******/
-    
-    function setAddress(address _address) public
+    // Endpoint used by costumer to delete subscriptions
+    function deleteSub(bytes32 subName) public 
     {
-        assert(msg.sender == admin);
-        dataContract = dataLedgerContract(_address);
+        // Check whether the user is subscribed
+        require(usersSubs[msg.sender].allSubs[subName] == true, "The user is not suscribed to the requeste type");
+        
+        // Check whether the susbcription is still active
+        require(now < usersSubs[msg.sender].subscriptions[subName], "Subscription is not active");
+        
+        // Get index of Subscription
+        uint _index = usersSubs[msg.sender].indexArraySubs[subName];
+        
+        // remove sub from userStruct
+        delete usersSubs[msg.sender].allSubs[subName];
+        delete usersSubs[msg.sender].arraySubs[_index];
+        
+        // Remove sub from subs
+        delete subs.allSubs[subName];
+        
+        // emit event
+        emit notifyRemove(msg.sender, subName);
     }
     
     
+    // Endpoint for the admin user to create new topics
+    function addNewType(bytes32 subName) public 
+    {
+        // Check if the user is the admin user
+        require(msg.sender == admin, "User does not have enough privileges");
+        
+        // Check if the type does not exist already
+        require(subs.allSubs[subName] == false, "The requested category alrady exists");
+        
+        // Add the category
+        subs.allSubs[subName] = true;
+        subs.availableTypes.push(subName);
+        subs.indexAvailableTypes[subName] = subs.availableTypes.length;
+        emit notifyNewCategory(msg.sender, subName);
+    }
+    
+    
+    // Endpoint for the admin user to remove existing topics
+    function deleteType(bytes32 subName) public 
+    {
+        // Check if the user is the admin user
+        require(msg.sender == admin, "User does not have enough privileges");
+        
+        // Check if the type exists
+        require(subs.allSubs[subName] == true, "The requested category does not exist");
+        
+        // remove type
+        delete subs.allSubs[subName];
+        delete subs.availableTypes[subs.availableTypes.length];
+        delete subs.indexAvailableTypes[subName];
+        emit notifyRemoveCategory(msg.sender, subName);
+    }
+    
+    
+    //getAllSubscriptions shows all the suscriptions that the user is subscribed to
+    function getAllSubscriptions() public view returns (bytes32[] memory)
+    {
+        return usersSubs[msg.sender].arraySubs;
+    }
+    
+    
+    // getAllTopics gets all the topics available in the platform
+    function getAllTopics() public view returns (bytes32[] memory) 
+    {
+        return subs.availableTypes;
+    }
     
 }

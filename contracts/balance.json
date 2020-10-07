@@ -11,17 +11,17 @@
 			{
 				"indexed": true,
 				"internalType": "bytes32",
-				"name": "_hash",
+				"name": "_subID",
 				"type": "bytes32"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "_value",
+				"name": "_endTime",
 				"type": "uint256"
 			}
 		],
-		"name": "purchaseNotify",
+		"name": "notifyNew",
 		"type": "event"
 	},
 	{
@@ -36,161 +36,144 @@
 			{
 				"indexed": true,
 				"internalType": "bytes32",
-				"name": "_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "_txHashExchange",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes32",
-				"name": "_txHashData",
+				"name": "_name",
 				"type": "bytes32"
 			}
 		],
-		"name": "responseNotify",
+		"name": "notifyNewCategory",
 		"type": "event"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "_addr",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "_subID",
+				"type": "bytes32"
+			}
+		],
+		"name": "notifyRemove",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "_addr",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "_name",
+				"type": "bytes32"
+			}
+		],
+		"name": "notifyRemoveCategory",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "subName",
+				"type": "bytes32"
+			}
+		],
+		"name": "addNewType",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "subName",
+				"type": "bytes32"
+			}
+		],
+		"name": "deleteSub",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "subName",
+				"type": "bytes32"
+			}
+		],
+		"name": "deleteType",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
-		"name": "checkBalance",
+		"name": "getAllSubscriptions",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes32[]",
 				"name": "",
-				"type": "uint256"
+				"type": "bytes32[]"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "clientAccount",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "checkHasPaid",
+		"inputs": [],
+		"name": "getAllTopics",
 		"outputs": [
 			{
-				"internalType": "bool",
+				"internalType": "bytes32[]",
 				"name": "",
-				"type": "bool"
+				"type": "bytes32[]"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "getPriceData",
+		"inputs": [],
+		"name": "greet",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "string",
 				"name": "",
-				"type": "uint256"
+				"type": "string"
 			}
 		],
-		"stateMutability": "view",
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "bytes32",
-				"name": "hash",
+				"name": "subName",
 				"type": "bytes32"
 			},
 			{
 				"internalType": "uint256",
-				"name": "tokens",
+				"name": "time",
 				"type": "uint256"
 			}
 		],
-		"name": "payData",
+		"name": "subscribeTo",
 		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "clientAccount",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "txHashExchange",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "txHashData",
-				"type": "bytes32"
-			}
-		],
-		"name": "sendToClient",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_address",
-				"type": "address"
-			}
-		],
-		"name": "setAddress",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			}
-		],
-		"name": "setPriceData",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
