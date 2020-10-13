@@ -94,9 +94,11 @@ async function payDataEvents(balanceContract, account)
 async function expandObject(obj)
 {
 
-  // Initialize the balance contract
+  // Initialize the balance contract and the data contract
   const _balanceAbi = JSON.parse(balanceABI);
+  const _dataABI = JSON.parse(dataABI);
   let balanceContract = await initContract(_balanceAbi, balanceAddr);
+  let dataContract = await initContract(_dataABI, dataAddr);
 
   // Hash of the data
   let hash =  $(obj).text();
@@ -112,17 +114,23 @@ async function expandObject(obj)
     _hash: hash
   };   
   
+  // Get the hash of the transaction "responseNotify"
   let events = await balanceContract.getPastEvents('responseNotify', {filter, fromBlock:0});
   let evt = events[0];
+
+  // Get the hash of the transaction that contains the event 
+  let eventsData = await dataContract.getPastEvents("evtStoreInfo", {filter: {_hash: hash}, fromBlock:0, toBlock:"latest"});
 
   // Transaction Hashes for the password and the data
   let transactionSecret = evt.returnValues._txHashExchange;
   let transactionData = evt.returnValues._txHashData;
+  let transactionHashEvent = eventsData[0].transactionHash;
   
   
   // Show this hashes in the modal window
   document.getElementById("passModal").innerText = transactionSecret;
   document.getElementById("dataModal").innerText = transactionData;
+  document.getElementById("eventModal").innerText = transactionHashEvent
 
   // Get the input of the data
   createXhrRequest('/input', {hash: hash}, function(err, resp){
